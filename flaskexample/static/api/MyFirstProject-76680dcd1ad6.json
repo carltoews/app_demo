@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "brave-arcadia-192323",
+  "private_key_id": "76680dcd1ad6f59c20d7a3b3371d02470d647b63",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCDL8VMOqk2deif\n7DZZXd4pjzdRWj7CmhSBVVDZ9UmQ6KxaIWiFe/dYp6OD3LLMpD/qJ752OMpPjGlR\ntT0Fl0kqnDuVIORA3ajt4e2FSVFDzv/8Gvn+XoIT4pmSBgR9c880IOnMCbce4Mg8\noKU93vAMc9j/TlHKlE0gt86jvUuoiQWs63bGLxYke9ckVXyRkqj14GZm2agd1xm2\nFAqlrJCAQGkmgZUNxLE7UuaBCXCwNZFnEdHqk1jGk21y6da2OMQZfqfFy9mAVqsW\nytywQV/8RBT3zJUYlc1h485jSIIKCLygdJeaOQfxJUt3K7sM7GuMwXbbZMlwegpO\n1wQtQ6ydAgMBAAECggEAEe7y2rPeM+q0bUA+QcM6PpYsaruafsHPccq27cTBVMTp\n4rxUbIMA0ibAjKMb8iu17Q2X1NN4nJ1GPHw5Jk2DHAcVghJoAZILqNFMxf661Dk0\n90K80BAdWhiNA9A8xuWQ+sBRFapyVQ9HcDpJvIaAbENd87DCL55MWN+nqOyUrioy\n+Lq4Smop9WdL4kIiikhSt1vIVEAIs7PKWrNiclHQkPnUHDEDqv58eHD9XBJusX9T\nfwnOsD45XpFU7atR1CsZpUo+uyALbBgJfHX/u9eUNhq4uG8e40RNZigIezhF5Trm\n/crrBJRpkw9ZSszI4diPz1VAyEjxJ3ASPlD23qeRBQKBgQC3e/XRjY15Pa3TRoWw\nhoA+u3zfNZLhi8UbdVMmEWnSCUqZfxNSDAGYeL85UdMo/KO8+DyXO8JKZsmsSU7C\n89PZ0ZCLySDssMDTz0Z4X4VhkzWCDw0AbQEtdPNOK+j902Jbs3iehlXpCEc31eq0\nQ7ENLUFsmSwovOl7vwr7x6KjTwKBgQC3CJeptB4os3LpOBQRS9NvwIhIsui8636p\nLBn7/X5amjXCOS+v9i9aSKLFA45TP2J7Wv5TzGwkRK3on8E1xxxtOjBYPYKIkTGc\n+RDjP5SlH63h4o1drn1f4HCjyNMu52PDzXgT88HMX2Wuh1WqnWoRxHsmiDyk62vu\n7s06RUUmUwKBgHjOp0U33CQtlht7XV6i0CF9tHQKhBD4w+iWUQ7JfFEMSQ/TeVcW\nDJ7lMZJ963gbD3vGPa6dbAkssDA9fBwkCiJqNq+y13i/z9YlrRJoYhuinyJo4nib\nTKEvVVrs0lT9Ls+N1Sca78mk5689q3DQ+OviFid4mnigGWKeoI6yHMVFAoGAN2Jz\nOhfVtG0wjV+5us4eCcfRtWXlxRzhc+Fzb2vyawoU0FOrmWw+QeyOzFzaGVipvTf4\nk3TdGFBr62ND/LjmYirkbB8Yu6hrwdsgABPCMAEZBawfKMTfDT8F9pmTRbMg3iPz\nfN4au3P2ecxb4MfHS98PgMZiy2itfVxnX4WMeh8CgYAPLlv9HCrUijqv/ItVKEN1\n/CiIlwNOShfxFnuDBPWxQRSmWMYy9yF7A4eyEfljIUZLuOHmW0qYXW8qqgmLfA6h\nSP0zE2K1PkgHwE7d4FgFvM7dSrt9q8IyRl8SEYvlxbzDIZJqe7TkiEWedo+HC9Ms\nr3ALPa3tZN1IDWKj4z9GIg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "poeml-27@brave-arcadia-192323.iam.gserviceaccount.com",
+  "client_id": "102825972422939176566",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/poeml-27%40brave-arcadia-192323.iam.gserviceaccount.com"
+}
