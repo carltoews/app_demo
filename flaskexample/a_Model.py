@@ -1,7 +1,7 @@
 # this file contains the backend to PoeML
 
 def get_path_and_file_names():
-    root_dir = "/Users/ctoews/Documents/Insight/app_demo"
+    root_dir = "/home/ubuntu/app_demo"
     api_dir = "/flaskexample/static/api"
     pkl_dir = "/flaskexample/static/pkl"
     api_file = "/MyFirstProject-76680dcd1ad6.json"
