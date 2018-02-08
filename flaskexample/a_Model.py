@@ -1,74 +1,113 @@
-def ModelIt(url):
+# this file contains the backend to PoeML
+
+def get_path_and_file_names():
+    root_dir = "/Users/ctoews/Documents/Insight/app_demo"
+    api_dir = "/flaskexample/static/api"
+    pkl_dir = "/flaskexample/static/pkl"
+    api_file = "/MyFirstProject-76680dcd1ad6.json"
+    poem_file = "df1_smallpoems.pkl"
+    vec_file = "df1_vecs.pkl"
+    vectorizer_file = "d1_vectorizer_replacement.pkl"
+    return root_dir, api_dir, pkl_dir, api_file, poem_file, vec_file, vectorizer_file
+
+
+def get_runtime_parameters():
+    n_matches_per_photo = 3 # maximum number of images to return
+    lam = .1        # regularization parameter
+    batch = False    # use averaging technique to handle multiple images
+    return n_matches_per_photo, lam, batch
+
+
+def get_pkl_files(root_dir,pkl_dir,poem_file,vec_file,vectorizer_file):
+    import pickle
+    import pandas as pd
+    df_poems = pd.read_pickle(root_dir + pkl_dir + '/' + poem_file)
+    df_vecs =   pd.read_pickle(root_dir + pkl_dir + '/' + vec_file)
+    vectorizer = pickle.load( open( root_dir + pkl_dir + '/' + vectorizer_file, "rb" ) )
+    return df_poems, df_vecs, vectorizer
+
+
+
+def get_stopwords():
+    from nltk.corpus import stopwords
+    import string
+    STOPLIST = stopwords.words('english')
+    SYMBOLS = " ".join(string.punctuation).split(" ") + \
+              ["-----", "--", "---", "...", "“", "”", "'s"] + list(string.digits)
+    return STOPLIST, SYMBOLS
+
+
+def tokenizeText(sample):
+
+    import spacy
+    global STOPLIST
+    global SYMBOLS
+
+    # get the tokens using spaCy
+    tokens = parser(sample)
+
+    # lemmatize
+    lemmas = []
+    for tok in tokens:
+        lemmas.append(tok.lemma_.lower().strip()
+                      if tok.lemma_ != "-PRON-" else tok.lower_)
+    tokens = lemmas
+
+    STOPWORDS, SYMBOLS = get_stopwords()
+
+    # stoplist the tokens
+    tokens = [tok for tok in tokens if tok not in STOPLIST]
+
+    # stoplist symbols
+    tokens = [tok for tok in tokens if tok not in SYMBOLS]
+
+    # remove large strings of whitespace
+    while "" in tokens:
+        tokens.remove("")
+    while " " in tokens:
+        tokens.remove(" ")
+    while "\n" in tokens:
+        tokens.remove("\n")
+    while "\n\n" in tokens:
+        tokens.remove("\n\n")
+
+    return tokens
+
+
+
+# extract image urls from information in photoset object (returned from Flickr api call)
+def assemble_urls(photoset):
+    urls = []
+    for photo in photoset['photoset']['photo']:
+        url = "https://farm" + str(photo['farm']) + ".staticflickr.com/" + photo['server'] + "/" + \
+              photo['id'] + "_" + photo['secret'] + ".jpg"
+        urls.append(url)
+    return urls
+
+
+
+# extact userid and albumid from Flickr album url (used to form image urls)
+def parse_url(url):
+
+    import re
+
+    try:
+        userid = re.search('photos/(.+?)/', url).group(1)
+    except AttributeError:
+        # AAA, ZZZ not found in the original string
+        userid = '' # apply your error handling
+
+    try:
+        albumid = re.search('albums/(.*)', url).group(1)
+    except AttributeError:
+        albumid = '' # apply your error handling
+
+    return userid, albumid
+
+
+def get_flickr_urls(url):
 
     import flickrapi
-    import json
-    import re
-    import io
-    from google.cloud import vision
-    from google.cloud.vision import types
-    from PIL import Image, ImageDraw
-    import os
-    import pandas as pd
-    import spacy
-    from sklearn.metrics.pairwise import euclidean_distances, cosine_distances, cosine_similarity
-    import pandas as pd
-    import sqlalchemy # pandas-mysql interface library
-    import sqlalchemy.exc # exception handling
-    import numpy as np
-
-    ##################################
-    # parameters
-    n = 3 #number of images/sonnets to return
-
-    #######################################
-    # functions
-
-    # connect to data base
-    def connect_db():
-        from sqlalchemy import create_engine
-        dbname = 'poetry_db'
-        username = 'ctoews'
-        engine = create_engine('postgres://%s@localhost/%s'%(username,dbname))
-        return engine
-
-    def assemble_urls(photoset):
-        urls = []
-        for photo in photoset['photoset']['photo']:
-            url = "https://farm" + str(photo['farm']) + ".staticflickr.com/" + photo['server'] + "/" + \
-                  photo['id'] + "_" + photo['secret'] + ".jpg"
-            urls.append(url)
-        return urls
-
-    def parse_url(url):
-
-        try:
-            userid = re.search('photos/(.+?)/', url).group(1)
-        except AttributeError:
-            # AAA, ZZZ not found in the original string
-            userid = '' # apply your error handling
-
-        try:
-            albumid = re.search('albums/(.*)', url).group(1)
-        except AttributeError:
-            # AAA, ZZZ not found in the original string
-            albumid = '' # apply your error handling
-
-        return userid, albumid
-
-    def explicit():
-        from google.cloud import storage
-
-        # Explicitly use service account credentials by specifying the private key
-        # file.
-        storage_client = storage.Client.from_service_account_json(
-            '/home/ubuntu/app_demo/flaskexample/static/api/MyFirstProject-76680dcd1ad6.json')
-
-        # Make an authenticated API request
-        buckets = list(storage_client.list_buckets())
-        print(buckets)
-
-    #############################################
-    # main
 
     #import flickr_keys
     api_key = u'37528c980c419716e0879a417ef8211c'
@@ -86,15 +125,82 @@ def ModelIt(url):
     # extract individual photo urls
     photo_urls = assemble_urls(albuminfo)
 
-    # if number of urls is less than maximum return number, reduce the latter
-    if len(photo_urls)<n:
-        n = len(photo_urls)
+    return photo_urls
 
-    # authenticate google
+
+
+def get_photo_urls(url):
+    # input could be a Flickr photo album url
+    if 'www.flickr.com/photos/' in url:
+        photo_urls = get_flickr_urls(url)
+
+    # or a list of image jpegs
+    else:
+        photo_urls = url.split(',')
+
+    return photo_urls
+
+
+
+# connect to google api
+def explicit(root_dir, api_dir, api_file):
+    from google.cloud import storage
+    # Explicitly use service account credentials by specifying the private key
+    # file.
+    storage_client = storage.Client.from_service_account_json(
+        root_dir + api_dir + '/' + api_file)
+
+    # Make an authenticated API request
+    buckets = list(storage_client.list_buckets())
+    print(buckets)
+
+
+
+def get_labels_for_remote_images(photo_urls, root_dir, api_dir, api_file):
+    import os
+    from google.cloud import vision
+    from google.cloud.vision import types
+    import pandas as pd
+    # authenticate
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
-    "/home/ubuntu/app_demo/flaskexample/static/api/MyFirstProject-76680dcd1ad6.json"
+        root_dir+ api_dir + '/' + api_file
+    explicit(root_dir, api_dir, api_file)
 
-    explicit()
+    # connect to Google api
+    client = vision.ImageAnnotatorClient()
+    image = types.Image()
+
+    # feed photo url to Google, extract label
+    all_labels = []
+    for url in photo_urls:
+        image.source.image_uri = url
+        response = client.label_detection(image=image)
+        labels = response.label_annotations
+        these_labels = ''
+        for label in labels:
+            these_labels += (label.description + ' ')
+        all_labels.append(these_labels)
+
+    # store labels as dataframe
+    df_all_labels = pd.DataFrame({'keywords':all_labels,'url':photo_urls})
+
+    # eliminate any photo that came back with zero labels
+    df_all_labels = df_all_labels.loc[df_all_labels.keywords.apply(lambda x: len(x))!=0]
+
+    return df_all_labels
+
+
+def get_labels_for_local_images(photo_urls, root_dir, api_dir, api_file):
+    """This function will need to be changed...doesn't currently work"""
+    import os
+    from google.cloud import vision
+    from google.cloud.vision import types
+
+    # authenticate
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
+        root_dir + api_dir + '/' + api_file
+
+    explicit(root_dir, api_dir, api_file)
 
     # connect to Google api
     client = vision.ImageAnnotatorClient()
@@ -114,55 +220,169 @@ def ModelIt(url):
     # store labels as dataframe
     all_labels = pd.DataFrame(all_labels,columns=['labels'])
 
-    # load parser
+    return all_labels
+
+
+
+def extract_n_top_words_from_poem(poem_vector,feature_names):
+    import numpy as np
+
+    # adjust as necessary
+    ntopwords = 10
+
+    # rank keywords by tf-idf weight
+    indices = poem_vector.indices
+    rank_idx = poem_vector.data.argsort()[:-ntopwords:-1]
+
+    # form list of such words and return it, along with weights
+    keywords = [feature_names[indices[i]] for i in rank_idx]
+    weights = [poem_vector.data[i] for i in rank_idx]
+
+    return keywords, np.array(weights)
+
+
+# transform the image labels with the vectorizer
+def weight_labels(df_all_labels, vectorizer):
+    import spacy
+    import pandas as pd
+
+    image_words = []
+    image_weights = []
+    feature_names = vectorizer.get_feature_names()
+
+    # the vectorizer seems to need to have access to the parser, probably for the tokenizing step
     parser = spacy.load('en')
 
-    # embed the set of all labels via word2vec
-    all_vecs = []
-    for l in all_labels.values:
-        v=parser(l[0])
-        all_vecs.append(v.vector)
-    all_vecs = np.array(all_vecs)
+    for row in vectorizer.transform(df_all_labels['keywords'].tolist()):
+        kw, wt = extract_n_top_words_from_poem(row,feature_names)
+        image_words.append(kw)
+        image_weights.append(wt)
 
-    # find the average embedding (could play with weighting schemes)
-    pic_vec = np.mean(all_vecs,axis=0).reshape(1,-1)
+    df_images = df_all_labels
+    df_images['keywords'] = image_words
+    df_images['weights'] = image_weights
+
+    # eliminate any photo that came back with zero labels
+    df_images = df_images.loc[df_images.keywords.apply(lambda x: len(x))!=0]
+
+    return df_images
 
 
-    #################################################3
-    # SQL workaround
-    
-    # connect to database
-    engine = connect_db()
 
-    # extract poem embeddings
-    #query = "select * from poem_vecs order by index;"
-    #poem_embeddings = pd.read_sql(query,engine)
-    #pv = poem_embeddings.iloc[:,1:].values
-    poem_embeddings =   pd.read_pickle("/home/ubuntu/App/flaskexample/static/pkl/poem_embeddings.pkl")
-    pv = poem_embeddings.iloc[:,1:].values
-    
-    # calculate cosine similarities
-    s=cosine_similarity(pic_vec,pv)
+def images2vec(df_images):
+    import spacy
+    import pandas as pd
+    import numpy as np
 
-    # rank the distances
-    idx=np.argsort(s)
-    sims = list(s[0,idx[0][:-n-1:-1]])
-    print("similarities:  ", sims)
+    # load parser, to be used with vectorizer
+    parser = spacy.load('en')
 
-    # extract sonnet sentences from database
-    #query = "select * from poetry_poems order by index;"
-    #sonnet_sentences = pd.read_sql(query,engine)
+    image_vectors = np.zeros((len(df_images),384))
+    j=0
+    for row in df_images.itertuples():
+        keywords = row.keywords
+        weights = row.weights
+        vecs = np.zeros((len(keywords),384))
+        i = 0
+        for k in keywords:
+            vecs[i,:] = parser(k).vector
+            i+=1
+        image_vectors[j,:]=np.dot(weights,vecs)
+        j+=1
 
-    sonnet_sentences = pd.read_pickle("/home/ubuntu/App/flaskexample/static/pkl/poem_poems.pkl")
-    ###############################################
-    
-    # extract relevant snippets
-    best_matches = sonnet_sentences.iloc[idx[0][:-n-1:-1],:]
+    return image_vectors
 
-    # combine into single dataframe
-    best_matches['similarity'] = sims
-    best_matches['url']= photo_urls[0:n] #['https://farm5.staticflickr.com/4623/39834715572_1559b597ec.jpg' for i in np.arange(n)]
-    # return as list
-    best_matches = best_matches.iloc[:,1:].to_dict('records')
 
-    return best_matches
+
+def find_best_match(image_vectors, poem_vectors, image_sentiment, poem_sentiment,n_matches_per_photo=3,batch=True,lam=.1):
+    import numpy as np
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    # find poem that maximizes a sentiment-regularized objective function
+    if batch:
+        image_vectors = np.mean(image_vectors,axis=0).reshape(1,384)
+        image_sentiment = [np.mean(image_sentiment)]
+
+    # assess the cosine similarity for each image/poem pair
+    sim = cosine_similarity(image_vectors,poem_vectors)
+
+    # also calculate the difference in sentiment score
+    dif = np.array([np.abs((im_s - poem_sentiment)) for im_s in image_sentiment])
+
+    # the net score is a weighted difference
+    net = sim - lam*dif
+
+    ix = net.argsort(axis=1)[:,:-n_matches_per_photo-1:-1]
+    scores = np.array([ list(net[i,ix[i,:]]) for i in range(len(ix))])
+
+    return ix, scores
+
+
+
+def gather_results(ix,scores,df_images,df_poems,photo_urls):
+    import pandas as pd
+    import numpy as np
+    # gather top N poems (for each picture, or for the "average" picture)
+    results = pd.DataFrame([ df_poems.loc[ix[i,:],'poem'].tolist() for i in range(len(ix))],\
+                           columns = [str(i) for i in range(1,ix.shape[1]+1)])
+
+    # collect image urls and keywords
+    if len(results) == len(df_images):
+        results[['url','keywords','weights','sentiment']] = \
+        df_images[['url','keywords','weights','sentiment']]
+
+    # if in batchmode, collect images with the most keywords
+    else:
+        ix = np.argmax(df_images.keywords.apply(lambda x: len(x)))
+        results['url']= df_images.loc[ix,'url']
+        results['keywords']= [df_images.loc[ix,'keywords']]
+        results['weights']=[df_images.loc[ix,'weights']]
+        results['sentiment']= df_images.loc[ix,'sentiment']
+
+    return results
+
+
+def ModelIt(url):
+
+    from PIL import Image, ImageDraw
+    import pandas as pd
+    import spacy
+    import numpy as np
+    from textblob import TextBlob
+
+    # load up path and file names, as well as runtime parameters
+    root_dir, api_dir, pkl_dir, api_file, poem_file, vec_file, vectorizer_file =\
+        get_path_and_file_names()
+    n_matches_per_photo, lam, batch = get_runtime_parameters()
+
+    # some of the larger data structures are stored in binary form, to expedite runtime
+    df_poems, df_vecs, vectorizer = get_pkl_files(root_dir,pkl_dir,poem_file,vec_file,vectorizer_file)
+    poem_vectors = df_vecs.values
+
+    # Set the variable "photo_urls", which is a list of urls of all images
+    photo_urls = get_photo_urls(url)
+
+    # Connect to Google-Cloud-Vision API and extract labels for each image
+    df_all_labels = get_labels_for_remote_images(photo_urls, root_dir, api_dir, api_file)
+
+    # weight the keywords by the vectorizer used to process the poetry text
+    df_images = weight_labels(df_all_labels, vectorizer)
+
+    # append sentiment analysis for each image
+    df_images['sentiment'] = [TextBlob(' '.join(x)).sentiment[0] for x in df_images.keywords]
+
+    # if after extracting and weighting labels, nothing remains, exit gracefully
+    if len(df_images)==0:
+        return -1
+
+    # otherwise, embed image vectors via word2vec
+    image_vectors = images2vec(df_images)
+
+    # return sorted scores
+    ix, scores = find_best_match(image_vectors, poem_vectors, df_images['sentiment'], df_poems['sentiment'],batch=batch)
+
+    # gather all relevant info into a dataframe
+    results = gather_results(ix,scores,df_images,df_poems,photo_urls)
+
+    # return a dictionary
+    return results.to_dict('records')

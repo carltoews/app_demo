@@ -62,7 +62,7 @@
         <li><a href="#">Contact</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><span href="#" class="navbar-left"><img src="../static/images/Insight-logo.jpg" height=25></span></li>
+        <li><span href="#" class="navbar-left"><img src="/static/images/Insight-logo.jpg" height=25></span></li>
 
       </ul>
     </div>
@@ -75,7 +75,7 @@
         <div class="row">
 
           <div class="col-md-4">
-            <img src="../static/images/poem_photo.jpg" class="img-circle" alt="Poem Photo" width="304" height="236"> ​
+            <img src="/static/images/poem_photo.jpg" class="img-circle" alt="Poem Photo" width="304" height="236"> ​
 
           </div>
 
@@ -92,7 +92,8 @@
 <div class="container text-center">
 
     <div class="starter-template">
-        <p>Enter the url of a Flickr album:</p>
+        <p>Enter the url of a Flickr album, or a comma-separated set
+        of image urls:</p>
     </div>
 
     <div class = "container">
@@ -100,14 +101,15 @@
       <form  action="/output" method="GET">
         <div class="form-group">
             <label for="key_words">Url:</label>
-            <input type="text" id="key_words" name='key_words' placeholder="e.g. https://www.flickr.com/photos/138072685@N02/albums/72157690932695551">
+            <input type="text" id="key_words" name='key_words'
+        placeholder="e.g. https://www.flickr.com/photos/138072685@N02/albums/72157690932695551"
+        style="width: 75%">
         </div>
-
         <button type="submit" class="btn btn-default btn-lg">Find your poetry snippet!</button>
 
       </form>
     </div>
-
+    
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="../static/js/bootstrap.min.js"></script>
 
