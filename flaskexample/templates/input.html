@@ -3,7 +3,10 @@
 <head>
   <title>PoeML</title>
   <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <link rel="shortcut icon" href="static/images/poetry-512.png">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -58,11 +61,13 @@
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav">
         <li class="active"><a href="#">Home</a></li>
-        <li><a href="#">About</a></li>
-        <li><a href="#">Contact</a></li>
+        <li ><a href="examples">Examples</a></li>
+        <li ><a href="algorithms">Algorithms</a></li>
+        <li><a href="about">About</a></li>
+        <li ><a href="contact">Contact</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
-        <li><span href="#" class="navbar-left"><img src="../static/images/Insight-logo.jpg" height=25></span></li>
+        <li><a style="color:red" href="http://www.insightdatascience.com"> <img src="/static/images/Insight-logo.jpg" height=25></a></li>
 
       </ul>
     </div>
@@ -73,26 +78,23 @@
 <div class="jumbotron">
     <div class="container">
         <div class="row">
-
           <div class="col-md-4">
-            <img src="../static/images/poem_photo.jpg" class="img-circle" alt="Poem Photo" width="304" height="236"> ​
-
+            <img src="/static/images/poem_photo.jpg" class="img-circle" alt="Poem Photo" width="304" height="236"> ​
           </div>
-
-            <div class="col-md-8">
-                <h1>PoeML</h1>
-                <h4>Use machine learning to find the perfect poem for your photos!</h4>
-            </div>
-
+          <div class="col-md-8">
+              <h1>PoeML</h1>
+              <h4>Use machine learning to find the perfect poem for your photos!</h4>
+          </div>
         </div>
-      </div>
+    </div>
 </div>
 
 
 <div class="container text-center">
 
     <div class="starter-template">
-        <p>Enter the url of a Flickr album:</p>
+        <h4>Enter the url of a Flickr album, or a comma-separated set
+        of image urls:</h4>
     </div>
 
     <div class = "container">
@@ -100,9 +102,10 @@
       <form  action="/output" method="GET">
         <div class="form-group">
             <label for="key_words">Url:</label>
-            <input type="text" id="key_words" name='key_words' placeholder="e.g. https://www.flickr.com/photos/138072685@N02/albums/72157690932695551">
+            <input type="text" id="key_words" name='key_words'
+        placeholder="e.g. https://www.flickr.com/photos/138072685@N02/albums/72157690932695551"
+        style="width: 75%">
         </div>
-
         <button type="submit" class="btn btn-default btn-lg">Find your poetry snippet!</button>
 
       </form>
@@ -112,6 +115,8 @@
     <script src="../static/js/bootstrap.min.js"></script>
 
   </div> <!-- /.container-->
+
+<!-- /.container-->
 
 
     <!-- Bootstrap core JavaScript
