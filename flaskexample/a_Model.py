@@ -1,7 +1,8 @@
 # this file contains the backend to PoeML
 
 def get_path_and_file_names():
-    root_dir = "/home/ubuntu/app_demo"
+    #root_dir = "/home/ubuntu/app_demo"
+    root_dir = "/Users/ctoews/Documents/Insight/app_demo"
     api_dir = "/flaskexample/static/api"
     pkl_dir = "/flaskexample/static/pkl"
     api_file = "/MyFirstProject-76680dcd1ad6.json"
@@ -10,12 +11,6 @@ def get_path_and_file_names():
     vectorizer_file = "d1_vectorizer_replacement.pkl"
     return root_dir, api_dir, pkl_dir, api_file, poem_file, vec_file, vectorizer_file
 
-
-def get_runtime_parameters():
-    n_matches_per_photo = 3 # maximum number of images to return
-    lam = .1        # regularization parameter
-    batch = False    # use averaging technique to handle multiple images
-    return n_matches_per_photo, lam, batch
 
 
 def get_pkl_files(root_dir,pkl_dir,poem_file,vec_file,vectorizer_file):
@@ -134,7 +129,7 @@ def get_photo_urls(url):
     if 'www.flickr.com/photos/' in url:
         photo_urls = get_flickr_urls(url)
 
-    # or a list of image jpegs
+    # or a list of image jpeg urls, or even local filenames
     else:
         photo_urls = url.split(',')
 
@@ -156,11 +151,12 @@ def explicit(root_dir, api_dir, api_file):
 
 
 
-def get_labels_for_remote_images(photo_urls, root_dir, api_dir, api_file):
-    import os
+def get_labels_for_images(photo_urls, root_dir, api_dir, api_file,image_location):
+    import os, io
     from google.cloud import vision
     from google.cloud.vision import types
     import pandas as pd
+
     # authenticate
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
         root_dir+ api_dir + '/' + api_file
@@ -168,12 +164,23 @@ def get_labels_for_remote_images(photo_urls, root_dir, api_dir, api_file):
 
     # connect to Google api
     client = vision.ImageAnnotatorClient()
-    image = types.Image()
 
     # feed photo url to Google, extract label
     all_labels = []
     for url in photo_urls:
-        image.source.image_uri = url
+        # different syntax for remote and local images
+        if image_location == 'remote':
+            image = types.Image()
+            image.source.image_uri = url
+        elif image_location == 'local':
+            # open image file
+            with io.open(url, 'rb') as image_file:
+                content = image_file.read()
+            image = types.Image(content=content)
+        else:
+            return pd.DataFrame({'keywords':all_labels,'url':photo_urls})
+
+        # get and parse labels
         response = client.label_detection(image=image)
         labels = response.label_annotations
         these_labels = ''
@@ -188,39 +195,6 @@ def get_labels_for_remote_images(photo_urls, root_dir, api_dir, api_file):
     df_all_labels = df_all_labels.loc[df_all_labels.keywords.apply(lambda x: len(x))!=0]
 
     return df_all_labels
-
-
-def get_labels_for_local_images(photo_urls, root_dir, api_dir, api_file):
-    """This function will need to be changed...doesn't currently work"""
-    import os
-    from google.cloud import vision
-    from google.cloud.vision import types
-
-    # authenticate
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = \
-        root_dir + api_dir + '/' + api_file
-
-    explicit(root_dir, api_dir, api_file)
-
-    # connect to Google api
-    client = vision.ImageAnnotatorClient()
-    image = types.Image()
-
-    # feed photo url to Google, extract label
-    all_labels = []
-    for url in photo_urls:
-        image.source.image_uri = url
-        response = client.label_detection(image=image)
-        labels = response.label_annotations
-        these_labels = ''
-        for label in labels:
-            these_labels += (label.description + ' ')
-        all_labels.append(these_labels)
-
-    # store labels as dataframe
-    all_labels = pd.DataFrame(all_labels,columns=['labels'])
-
-    return all_labels
 
 
 
@@ -294,7 +268,7 @@ def images2vec(df_images):
 
 
 
-def find_best_match(image_vectors, poem_vectors, image_sentiment, poem_sentiment,n_matches_per_photo=3,batch=True,lam=.1):
+def find_best_match(image_vectors, poem_vectors, image_sentiment, poem_sentiment,n_matches_per_photo=3,batch=False,lam=0.1,gamma=0.0):
     import numpy as np
     from sklearn.metrics.pairwise import cosine_similarity
 
@@ -342,7 +316,7 @@ def gather_results(ix,scores,df_images,df_poems,photo_urls):
     return results
 
 
-def ModelIt(url):
+def ModelIt(url,image_location='remote', n_matches_per_photo = 3,batch=False,lam=0.1,gamma=0.0):
 
     from PIL import Image, ImageDraw
     import pandas as pd
@@ -353,7 +327,6 @@ def ModelIt(url):
     # load up path and file names, as well as runtime parameters
     root_dir, api_dir, pkl_dir, api_file, poem_file, vec_file, vectorizer_file =\
         get_path_and_file_names()
-    n_matches_per_photo, lam, batch = get_runtime_parameters()
 
     # some of the larger data structures are stored in binary form, to expedite runtime
     df_poems, df_vecs, vectorizer = get_pkl_files(root_dir,pkl_dir,poem_file,vec_file,vectorizer_file)
@@ -363,7 +336,7 @@ def ModelIt(url):
     photo_urls = get_photo_urls(url)
 
     # Connect to Google-Cloud-Vision API and extract labels for each image
-    df_all_labels = get_labels_for_remote_images(photo_urls, root_dir, api_dir, api_file)
+    df_all_labels = get_labels_for_images(photo_urls, root_dir, api_dir, api_file, image_location)
 
     # weight the keywords by the vectorizer used to process the poetry text
     df_images = weight_labels(df_all_labels, vectorizer)
@@ -384,5 +357,6 @@ def ModelIt(url):
     # gather all relevant info into a dataframe
     results = gather_results(ix,scores,df_images,df_poems,photo_urls)
 
+    #pdb.set_trace()
     # return a dictionary
     return results.to_dict('records')
